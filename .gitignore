@@ -1,0 +1,38 @@
+# 原始数据目录（包含患者敏感信息）
+01_data_repository/
+
+# 备份目录
+99_backup/
+
+# Python 缓存
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.ruff_cache/
+
+# 虚拟环境
+venv/
+ENV/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 系统文件
+.DS_Store
+Thumbs.db
+~$*
+
+# 输出文件（可选择保留或忽略）
+# backend/output/
+
+# 临时文件
+*.tmp
+*.temp
+*.log
