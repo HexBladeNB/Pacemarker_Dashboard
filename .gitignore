@@ -30,7 +30,8 @@ Thumbs.db
 ~$*
 
 # 输出文件（可选择保留或忽略）
-# backend/output/
+backend/output/
+patient_records/
 
 # 临时文件
 *.tmp

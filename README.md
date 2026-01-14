@@ -12,9 +12,9 @@
 2.  **趋势分析**：追踪患者长期的参数变化（如电极阻抗趋势）。
 3.  **异常预警**：自动高亮显示超出正常范围的指标。
 
-## 🛠️ 当前进度 (Phase 1: Backend ETL)
+## 🛠️ 当前进度 (Phase 1: Backend ETL) ✅
 
-目前已完成核心的 **ETL (Extract, Transform, Load)** 管道，能够从原始 Excel 报告中清洗出标准化的 JSON 数据。
+已完成核心的 **ETL (Extract, Transform, Load)** 管道，能够从原始 Excel 报告中清洗出标准化的 JSON 数据。
 
 -   **多厂家支持**：适配美敦力、雅培、波科、百多力、创领等主流品牌。
 -   **模板自适应**：自动识别 14+ 种不同的报告模板（起搏器/ICD/CRT-D/CRT-P）。
@@ -24,6 +24,7 @@
     -   ✔️ **事件记录**：房颤(AF)、室速(VT/VF)等事件的负荷与次数。
     -   ✔️ **电池状态**：电压、阻抗及预估剩余寿命 (ERI/EOS)。
 -   **增量处理**：MD5 校验机制，仅处理新导入或修改的报告文件。
+-   ✔️ **患者数据分离**：自动按挂号ID拆分，每位患者独立JSON文件，时间序列排序。
 
 ## 💡 核心资产：数据中心 (Data Hub)
 
@@ -75,9 +76,12 @@ Pacemarker_Dashboard/
 ├── backend/                # 核心数据处理引擎
 │   ├── core/               # 提取逻辑与解析器
 │   ├── data/               # 模板定义 (JSON)
-│   ├── scripts/            # 批处理脚本
-│   └── output/             # 清洗后的结构化数据 (JSON) - [Git Ignored]
-├── 01_data_repository/     # 原始 Excel 报告存放区 - [Git Ignored 🔒]
+│   ├── scripts/            # 辅助工具脚本
+│   ├── config.py           # 配置与路径定义
+│   └── main.py             # 程序主入口
+├── patient_records/        # [Output] 按患者挂号ID拆分的独立JSON - [Git Ignored 🔒]
+├── 01_data_repository/     # [Input] 原始 Excel 报告存放区 - [Git Ignored 🔒]
+├── 99_backup/              # 历史备份 - [Git Ignored]
 └── doc/                    # 开发文档
 ```
 

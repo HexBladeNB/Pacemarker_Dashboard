@@ -22,6 +22,8 @@ from core.utils import clean_value, clean_label, is_ignored
 def get_anchors(handler):
     """查找关键区域的锚点行号"""
     anchors = {"basic": None, "antitachy": None, "test": None, "event": None}
+    at_af_row = None  # 备选：AT/AF事件行
+    
     for r in range(handler.nrows):
         for c in range(min(5, handler.ncols)):
             val = str(handler.get_cell_value(r, c)).strip()
@@ -33,6 +35,14 @@ def get_anchors(handler):
                 anchors["test"] = r
             elif KW_EVENT in val:
                 anchors["event"] = r
+            # 备选：检测AT/AF事件行（用于没有"事件记录"标题的模板）
+            elif at_af_row is None and "AT/AF事件" in val:
+                at_af_row = r
+    
+    # 如果没有找到"事件记录"锚点，使用AT/AF事件行作为备选
+    if anchors["event"] is None and at_af_row is not None:
+        anchors["event"] = at_af_row
+    
     return anchors
 
 
@@ -203,6 +213,42 @@ def extract_events_flexible(handler, start_row, end_row):
     return data
 
 
+def extract_name_from_filename(filename: str) -> str:
+    """从文件名中提取患者姓名"""
+    import re as regex
+    name = filename.replace(".xlsx", "").replace(".xls", "")
+    
+    suffixes = [
+        "起搏器报告单", "CRT-P报告单", "CRT-D报告单", "ICD报告单",
+        "（美敦力）", "（雅培）", "（百多力）", "(美敦力)", "(雅培)", "(百多力)",
+        "Vitatron", " ", "(", "（", ")", "）", "-", "_"
+    ]
+    
+    for suffix in suffixes:
+        name = name.split(suffix)[0]
+    
+    name = regex.sub(r'\s*\(\d+\)\s*$', '', name)
+    name = regex.sub(r'\s*（\d+）\s*$', '', name)
+    
+    return name.strip()
+
+
+def validate_and_fix_header(d_header: dict, filename: str) -> dict:
+    """校验并修复 header 数据：如果文件名姓名与 header 姓名不匹配，用文件名姓名覆盖并清空登记号"""
+    header_name = d_header.get("姓名", "")
+    filename_name = extract_name_from_filename(filename)
+    
+    if not header_name or not filename_name:
+        return d_header
+    
+    # 姓名不匹配时，整个 header 被污染，修正姓名并清空登记号
+    if filename_name not in header_name and header_name not in filename_name:
+        d_header["姓名"] = filename_name
+        d_header["登记号"] = ""  # 清空污染的登记号，避免错误分组
+    
+    return d_header
+
+
 def process_file(filepath, filename):
     """处理单个文件并返回结构化数据"""
     try:
@@ -216,6 +262,10 @@ def process_file(filepath, filename):
         basic_end = rat if rat else rt
 
         d_header, _ = extract_kv_in_range(handler, 0, rb)
+        
+        # 校验并修复 header 数据
+        d_header = validate_and_fix_header(d_header, filename)
+        
         d_basic, _ = extract_kv_in_range(handler, rb, basic_end)
         d_basic_tbl = extract_table_in_range(handler, rb, basic_end, Z2_COL_HEADERS, Z2_ROW_HEADERS)
 
@@ -250,3 +300,4 @@ def process_file(filepath, filename):
         return result
     except Exception as e:
         return {"meta": {"filename": filename, "error": str(e)}}
+

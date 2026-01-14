@@ -3,7 +3,6 @@
 从匹配报告中提取所有文件的数据
 """
 
-import json
 import csv
 import warnings
 import sys
@@ -11,12 +10,15 @@ from pathlib import Path
 
 # 添加 backend 目录到路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from config import MATCHING_REPORT_FILE, PACEMAKER_DATA_FILE
+from config import MATCHING_REPORT_FILE
 from core.extractors import process_file
 
 
 def extract_all_data():
-    """从匹配报告中提取所有文件的数据"""
+    """
+    从匹配报告中提取所有文件的数据
+    返回: 提取的数据列表（内存管道，不写入文件）
+    """
     if not MATCHING_REPORT_FILE.exists():
         print(f"错误: 匹配报告不存在 ({MATCHING_REPORT_FILE})")
         print("请先运行 match_templates.py")
@@ -37,14 +39,12 @@ def extract_all_data():
             print(f"已处理 {i + 1}/{len(files)}...")
         json_output.append(process_file(file["Full Path"], file["Filename"]))
 
-    with open(PACEMAKER_DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(json_output, f, ensure_ascii=False, indent=2)
-    
-    print(f"提取完成。已保存到 {PACEMAKER_DATA_FILE}")
+    print(f"数据提取完成，共 {len(json_output)} 条记录。")
     return json_output
 
 
 if __name__ == "__main__":
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        extract_all_data()
+        data = extract_all_data()
+        print(f"提取了 {len(data)} 条记录（内存模式，未写入文件）")

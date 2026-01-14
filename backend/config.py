@@ -13,10 +13,9 @@ DATA_REPOSITORY = PROJECT_ROOT / "01_data_repository"
 
 # 数据文件
 TEMPLATES_FILE = BACKEND_DIR / "data" / "templates.json"
-OUTPUT_DIR = BACKEND_DIR / "output"
-PACEMAKER_DATA_FILE = OUTPUT_DIR / "pacemaker_data.json"
-MATCHING_REPORT_FILE = OUTPUT_DIR / "matching_report.csv"
-PROCESSED_FILES_FILE = OUTPUT_DIR / "processed_files.json"
+PATIENT_RECORDS_DIR = PROJECT_ROOT / "patient_records"  # 所有输出都在这里
+MATCHING_REPORT_FILE = PATIENT_RECORDS_DIR / "matching_report.csv"
+PROCESSED_FILES_FILE = PATIENT_RECORDS_DIR / "processed_files.json"
 
 # 关键字定义
 KW_BASIC = "基本工作参数"
@@ -50,4 +49,5 @@ for h in Z2_COL_HEADERS + Z3_COL_HEADERS:
     ])
 
 # 确保输出目录存在
-OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+PATIENT_RECORDS_DIR.mkdir(parents=True, exist_ok=True)
+
