@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pacemaker Dashboard</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <!-- Google Fonts for Medical Aesthetic -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar: Patient List -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>起搏器 <span class="highlight">数据中心</span></h2>
+                <div class="search-box">
+                    <input type="text" id="patientSearch" placeholder="搜索姓名或登记号...">
+                </div>
+            </div>
+            <div class="patient-list" id="patientList">
+                <!-- Data will be populated by JS -->
+                <div class="loading">正在加载数据...</div>
+            </div>
+            <div class="sidebar-footer">
+                共 <span id="patientCount">0</span> 份档案
+            </div>
+        </aside>
+
+        <!-- Main Content: Patient Details -->
+        <main class="main-content" id="mainContent">
+            <!-- Empty State -->
+            <div id="emptyState" class="empty-state">
+                <div class="icon">🫀</div>
+                <h3>请在左侧选择一位患者</h3>
+                <p>查看详细的程控记录、趋势分析及设备状态。</p>
+            </div>
+
+            <!-- Detail View (Hidden by default) -->
+            <div id="patientDetail" class="patient-detail hidden">
+                <!-- Header -->
+                <header class="patient-header">
+                    <div class="patient-info">
+                        <h1 id="pName">Patient Name</h1>
+                        <span class="badge id-badge" id="pId">ID: 000000</span>
+                    </div>
+                    <div class="device-info">
+                        <div class="device-meta">
+                            <span class="label">品牌</span>
+                            <span class="value" id="dBrand">--</span>
+                        </div>
+                        <div class="device-meta">
+                            <span class="label">型号</span>
+                            <span class="value" id="dModel">--</span>
+                        </div>
+                        <div class="device-meta">
+                            <span class="label">植入日期</span>
+                            <span class="value" id="dDate">--</span>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Navigation Tabs -->
+                <nav class="detail-tabs">
+                    <button class="tab-btn active" data-tab="overview">总览</button>
+                    <button class="tab-btn" data-tab="trends">趋势分析</button>
+                    <button class="tab-btn" data-tab="records">程控历史</button>
+                </nav>
+
+                <!-- Content Sections -->
+                <div class="tab-content">
+                    <!-- Tab: Overview -->
+                    <section id="overview" class="tab-pane active">
+                        <div class="grid-container">
+                            <!-- Helper Card: Conclusion & Next Visit -->
+                            <div class="card full-width summary-card">
+                                <h3><span class="icon">📋</span> 本次程控总结</h3>
+                                <div class="card-body horizontal-split">
+                                    <div class="split-section">
+                                        <span class="label">程控结论</span>
+                                        <p class="text-highlight" id="visitConclusion">--</p>
+                                    </div>
+                                    <div class="divider-vertical"></div>
+                                    <div class="split-section">
+                                        <span class="label">建议下次随访</span>
+                                        <p class="text-accent" id="nextVisitDate">--</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Battery Card -->
+                            <div class="card highlight-card">
+                                <h3><span class="icon">🔋</span> 电池状态</h3>
+                                <div class="card-body">
+                                    <div class="metric-group">
+                                        <div class="metric-large">
+                                            <span id="batStatus">--</span> <small>V</small>
+                                        </div>
+                                        <div class="metric-sub" id="batLife">预估 -- 年</div>
+                                    </div>
+                                    <div class="status-indicator" id="batIndicator"></div>
+                                </div>
+                            </div>
+
+                            <!-- Mode Card -->
+                            <div class="card">
+                                <h3><span class="icon">⚙️</span> 起搏模式</h3>
+                                <div class="card-body">
+                                    <div class="metric-medium" id="pacingMode">--</div>
+                                    <div class="metric-detail-grid">
+                                        <div class="metric-item">
+                                            <span class="label">低限频率</span>
+                                            <b id="lowerRate">--</b> <small>bpm</small>
+                                        </div>
+                                        <div class="metric-item">
+                                            <span class="label">上限跟踪</span>
+                                            <b id="upperRate">--</b> <small>bpm</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Events Card -->
+                            <div class="card alert-card">
+                                <h3><span class="icon">⚠️</span> 关键事件</h3>
+                                <div class="card-body">
+                                    <div class="event-row">
+                                        <span>模式转换 (AMS)</span>
+                                        <b id="amsSwitch">--</b>
+                                    </div>
+                                    <div class="event-row">
+                                        <span>AT/AF 负荷</span>
+                                        <b id="atafLoad">--</b>
+                                    </div>
+                                    <div class="event-row">
+                                        <span>快心室率事件</span>
+                                        <b id="vtEvents">--</b>
+                                    </div>
+                                    <div class="event-row">
+                                        <span>其他事件</span>
+                                        <b id="otherEvents">--</b>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Lead Status (Dynamic Grid) -->
+                            <div class="card full-width">
+                                <h3><span class="icon">🔌</span> 导线状态 (最新程控)</h3>
+                                <table class="medical-table">
+                                    <thead>
+                                        <tr>
+                                            <th>腔室</th>
+                                            <th>阻抗 (Ω)</th>
+                                            <th>感知 (mV)</th>
+                                            <th>阈值 (V)</th>
+                                            <th>输出</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="leadTableBody">
+                                        <!-- Populated by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Tab: Trends -->
+                    <section id="trends" class="tab-pane">
+                        <div class="chart-container">
+                            <h3>Pacing Threshold Trend</h3>
+                            <canvas id="thresholdChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3>Impedance Trend</h3>
+                            <canvas id="impedanceChart"></canvas>
+                        </div>
+                    </section>
+
+                    <!-- Tab: Records -->
+                    <section id="records" class="tab-pane">
+                        <div class="timeline" id="recordTimeline">
+                            <!-- Populated by JS -->
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="data/data_bundle.js"></script>
+    <script src="assets/js/app.js"></script>
+    <script src="assets/js/charts.js"></script>
+</body>
+
+</html>
